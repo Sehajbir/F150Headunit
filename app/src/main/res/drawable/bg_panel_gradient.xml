@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Subtle vertical scrim over the background photo so text stays readable. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="@color/scrim_top"
+        android:centerColor="#590A0E14"
+        android:endColor="@color/scrim_bottom" />
+</shape>

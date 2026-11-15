@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Root layout: 1280x720 landscape split into 1/3 (truck info) + 2/3
+  (CarPlay/Android Auto projection placeholder). LinearLayout weights keep
+  the exact proportions on any density the head unit reports.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:baselineAligned="false">
+
+    <include
+        android:id="@+id/panel_truck_info"
+        layout="@layout/panel_truck_info"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/panel_divider" />
+
+    <include
+        android:id="@+id/panel_projection"
+        layout="@layout/panel_projection"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2" />
+</LinearLayout>
