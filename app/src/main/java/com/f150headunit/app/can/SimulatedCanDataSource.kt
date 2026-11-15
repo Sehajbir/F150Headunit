@@ -19,6 +19,7 @@ class SimulatedCanDataSource : CanDataSource {
 
     override val sourceName: String = "Simulation"
     override var listener: ((CanFrame) -> Unit)? = null
+    override var statusListener: ((String) -> Unit)? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var running = false
@@ -35,6 +36,7 @@ class SimulatedCanDataSource : CanDataSource {
     override fun start(context: Context) {
         if (running) return
         running = true
+        statusListener?.invoke("Bench simulation — no hardware")
         handler.post(ticker)
     }
 
@@ -42,6 +44,7 @@ class SimulatedCanDataSource : CanDataSource {
         running = false
         handler.removeCallbacks(ticker)
         listener = null
+        statusListener = null
     }
 
     private fun emit() {

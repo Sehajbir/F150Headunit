@@ -54,15 +54,26 @@ screen on.
 CanDataSource ──(CanFrame)──▶ VehicleRepository ──▶ TruckInfoController ──▶ views
      ▲                            ▲
      │                     CanSignalDecoder (ExampleHsCanDecoder)
-     └── SimulatedCanDataSource (default) · UsbCanDataSource (hardware hook)
+     └── SimulatedCanDataSource (bench default) · SlcanCanDataSource (real bus)
 ```
 
-- **Default: simulation.** `SimulatedCanDataSource` synthesizes the same frames a real
-  adapter would, so the whole decode→UI pipeline runs on the bench (a small `DEMO` badge
-  appears on the speed readout).
-- **Real hardware:** implement `UsbCanDataSource` (there's a step-by-step TODO in the
-  file: permission → open endpoints → set 500 kbit/s → read loop emitting `CanFrame`s),
-  then remap the IDs in `ExampleHsCanDecoder` to your actual bus/DBC:
+**Working hardware path.** `SlcanCanDataSource` streams from a USB **SLCAN/Lawicel**
+adapter (CANable in `slcan` mode, CH341/CP210x/FTDI serial CAN dongles, …):
+
+- `UsbAcmTransport` — CDC-ACM link over Android USB host (endpoint discovery, interface
+  claim, SET_LINE_CODING / SET_CONTROL_LINE_STATE handshake, bulk reads/writes)
+- `SlcanCodec` — opens the channel at **500 kbit/s** (`C` → `S6` → `O`) and parses
+  standard/extended frames (`t…CR` / `T…CR`)
+- `SlcanCanDataSource` — adapter discovery, runtime USB permission prompt, reader thread,
+  and a reconnect loop so replugging (or momentary bus errors) self-heals. Plugging a
+  known adapter also offers to open this app via a `USB_DEVICE_ATTACHED` filter.
+
+Live link status ("waiting for adapter", "permission", "connected", error) is reported in
+**Settings → Vehicle data → CAN data source**.
+
+**Signal decoding.** Frames are translated by `ExampleHsCanDecoder`. Its IDs are a clean,
+documented mapping — **remap them to your truck's DBC** (or OBD-II proxy) when wiring the
+real bus:
 
 | ID | Contents |
 |---|---|
@@ -72,7 +83,12 @@ CanDataSource ──(CanFrame)──▶ VehicleRepository ──▶ TruckInfoCon
 | `0x2F0` | byte0 — fuel % · bytes1-2 LE — range, miles |
 | `0x300` | bytes0-1 LE — compass heading, 0.5° per bit |
 
-Choose the source at runtime under **Settings → Vehicle data → CAN data source**.
+Different adapter protocol? Implement `CanTransport` and swap one line in
+`SlcanCanDataSource.sessionLoop()` — discovery, permission and reconnect logic all stand.
+
+**Bench mode.** `SimulatedCanDataSource` synthesizes the same frames a real adapter would,
+so the whole decode→UI pipeline runs without hardware (a small `DEMO` badge appears on the
+speed readout). It is the default until you switch to the USB source.
 
 ## Configuring the projection panel
 
@@ -80,10 +96,17 @@ Choose the source at runtime under **Settings → Vehicle data → CAN data sour
 2. Pick any launchable app installed on the unit (the CarPlay/Android Auto client,
    navigation, media, …) — its icon and name then appear on the panel, and tapping the
    panel launches it. Select *None* to restore the "Not Connected" placeholder.
-3. Optional: enable **Auto-open projection app on start**.
+3. Optional: enable **Auto-open projection app on start** — the app also opens
+   automatically the moment a projection device connects.
 
-> Note: stock Android can't embed another app's UI inside ours, so the panel is a
-> launcher/placeholder by design. App visibility is handled via a `<queries>` LAUNCHER
+**Connection awareness.** `ConnectionMonitor` watches USB accessory events: wired Android
+Auto presents the phone as a USB accessory to the head unit, so the panel switches between
+*Waiting for device…* and *Device connected* live (and auto-opens the configured app on
+the connect edge when enabled). CarPlay dongle boxes manage the phone session inside their
+own app, so there the panel stays a tap-to-open tile.
+
+> Note: stock Android can't embed another app's UI inside ours, so the panel is a launcher
+> tied to connection state by design. App visibility is handled via a `<queries>` LAUNCHER
 > declaration — no `QUERY_ALL_PACKAGES` permission needed.
 
 Other settings: speed unit (MPH/KM/H), temperature unit (°F/°C).
@@ -94,13 +117,16 @@ Other settings: speed unit (MPH/KM/H), temperature unit (°F/°C).
 app/src/main/java/com/f150headunit/app/
 ├── F150Application.kt          # boots the CAN → state pipeline
 ├── MainActivity.kt             # fullscreen split, immersive, keep-screen-on
-├── can/                        # CanFrame · CanDataSource · Simulated · USB skeleton · decoder
+├── can/                        # CanTransport · UsbAcmTransport (CDC-ACM) · SlcanCodec
+│                               # SlcanCanDataSource (real bus) · SimulatedCanDataSource
+│                               # ExampleHsCanDecoder
 ├── data/VehicleRepository.kt   # live VehicleState, fan-out to UI
 ├── model/                      # VehicleState · DoorState · Compass · Units
+├── projection/ConnectionMonitor.kt  # USB-accessory connection detection
 ├── settings/                   # Settings (prefs), SettingsActivity, AppPickerActivity
 └── ui/
     ├── TruckInfoController.kt      # left panel logic
-    ├── ProjectionPanelController.kt# right panel logic
+    ├── ProjectionPanelController.kt# right panel logic (connection-aware launcher)
     └── views/                      # SegmentGaugeView · TruckOutlineView (custom-drawn)
 ```
 

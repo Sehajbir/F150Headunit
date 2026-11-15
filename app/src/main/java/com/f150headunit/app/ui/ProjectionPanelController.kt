@@ -6,19 +6,26 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.SystemClock
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import com.f150headunit.app.R
+import com.f150headunit.app.projection.ConnectionMonitor
 import com.f150headunit.app.settings.Settings
 import com.f150headunit.app.settings.SettingsActivity
 
 /**
- * Drives the right two-thirds of the screen — the placeholder that stands in
- * for the unit's CarPlay/Android Auto app (or any other installed app the user
- * picks in Settings). Tapping the panel launches the configured app; the
- * settings chip opens the configuration screen.
+ * Drives the right two-thirds of the screen — the panel that stands in for the
+ * unit's CarPlay/Android Auto app (or any other installed app the user picks
+ * in Settings).
+ *
+ * A stock Android app cannot embed another app's UI, so the panel is a smart
+ * launcher: it watches [ConnectionMonitor] for a projection session starting
+ * on the unit, reflects "Waiting for device…" / "Device connected", and hands
+ * off to the configured app on tap, on boot (optional), or automatically the
+ * moment a phone connects (optional).
  */
 class ProjectionPanelController(
     private val activity: Activity,
@@ -35,15 +42,35 @@ class ProjectionPanelController(
     private val hint = root.findViewById<TextView>(R.id.text_projection_hint)
     private val settingsButton = root.findViewById<TextView>(R.id.button_projection_settings)
 
+    private val connectionMonitor = ConnectionMonitor(activity)
+
     private var launchPackage: String? = null
-    private var autoLaunchAttempted = false
+    private var deviceConnected = false
+    private var lastReportedConnected = false
+    private var onStartLaunchAttempted = false
+    private var lastAutoLaunchAt = 0L
 
     init {
         settingsButton.setOnClickListener {
             activity.startActivity(Intent(activity, SettingsActivity::class.java))
         }
         // Tapping anywhere on the panel opens the configured projection app.
-        root.setOnClickListener { launchConfiguredApp() }
+        root.setOnClickListener { launchConfiguredApp(auto = false) }
+
+        connectionMonitor.start(object : ConnectionMonitor.Listener {
+            override fun onConnectionChanged(connected: Boolean) {
+                deviceConnected = connected
+                applyConnectionState()
+                if (connected && !lastReportedConnected) {
+                    onDeviceJustConnected()
+                }
+                lastReportedConnected = connected
+            }
+        })
+    }
+
+    fun detach() {
+        connectionMonitor.stop()
     }
 
     /** Re-reads Settings and PackageManager state; call on resume. */
@@ -60,25 +87,34 @@ class ProjectionPanelController(
             showMissingApp(pkg)
             return
         }
-        showConfiguredApp(appInfo)
         launchPackage = pkg
+        showConfiguredApp(appInfo)
     }
 
-    /** Fires the optional auto-launch — at most once per activity instance. */
+    /** Optional auto-open of the configured app once at boot. */
     fun maybeAutoLaunch() {
-        if (autoLaunchAttempted) return
-        autoLaunchAttempted = true
+        if (onStartLaunchAttempted) return
+        onStartLaunchAttempted = true
         if (settings.autoLaunchProjection) {
-            launchConfiguredApp()
+            launchConfiguredApp(auto = true)
         }
     }
 
-    private fun launchConfiguredApp() {
+    private fun onDeviceJustConnected() {
+        if (settings.autoLaunchProjection) {
+            launchConfiguredApp(auto = true)
+        }
+    }
+
+    private fun launchConfiguredApp(auto: Boolean) {
         val pkg = launchPackage ?: return
+        // Debounce auto-launches (boot + connect edge can fire moments apart).
+        if (auto && SystemClock.uptimeMillis() - lastAutoLaunchAt < AUTO_DEBOUNCE_MS) return
         val intent = packageManager.getLaunchIntentForPackage(pkg) ?: return
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         try {
             activity.startActivity(intent)
+            if (auto) lastAutoLaunchAt = SystemClock.uptimeMillis()
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(activity, R.string.toast_unable_to_open, Toast.LENGTH_SHORT).show()
         }
@@ -92,6 +128,7 @@ class ProjectionPanelController(
         title.setText(R.string.projection_default_title)
         status.visibility = View.VISIBLE
         status.setText(R.string.projection_not_connected)
+        status.setTextColor(activity.getColor(R.color.text_secondary))
         hint.setText(R.string.projection_hint)
     }
 
@@ -101,6 +138,7 @@ class ProjectionPanelController(
         title.text = pkg
         status.visibility = View.VISIBLE
         status.setText(R.string.projection_missing)
+        status.setTextColor(activity.getColor(R.color.text_secondary))
         hint.setText(R.string.projection_hint)
     }
 
@@ -110,8 +148,21 @@ class ProjectionPanelController(
         appIcon.setImageDrawable(packageManager.getApplicationIcon(appInfo))
         title.text = packageManager.getApplicationLabel(appInfo)
         status.visibility = View.VISIBLE
-        status.setText(R.string.projection_ready)
-        hint.setText(R.string.projection_ready_hint)
+        applyConnectionState()
+    }
+
+    /** Connection line on the configured-app tile: waiting vs connected. */
+    private fun applyConnectionState() {
+        if (launchPackage == null) return // placeholder/missing own their texts
+        if (deviceConnected) {
+            status.setText(R.string.projection_connected)
+            status.setTextColor(activity.getColor(R.color.accent_blue))
+            hint.setText(R.string.projection_ready_hint)
+        } else {
+            status.setText(R.string.projection_waiting)
+            status.setTextColor(activity.getColor(R.color.text_secondary))
+            hint.setText(R.string.projection_hint)
+        }
     }
 
     // ---- Helpers ----
@@ -125,5 +176,9 @@ class ProjectionPanelController(
         }
     } catch (e: PackageManager.NameNotFoundException) {
         null
+    }
+
+    private companion object {
+        const val AUTO_DEBOUNCE_MS = 1_500L
     }
 }

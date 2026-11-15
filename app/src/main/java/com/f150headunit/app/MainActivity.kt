@@ -45,6 +45,7 @@ class MainActivity : Activity() {
                 it.refresh()
                 it.maybeAutoLaunch()
             }
+        enterImmersiveMode()
     }
 
     override fun onResume() {
@@ -61,6 +62,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         truckInfo?.detach()
+        projectionPanel?.detach()
         truckInfo = null
         projectionPanel = null
         super.onDestroy()
