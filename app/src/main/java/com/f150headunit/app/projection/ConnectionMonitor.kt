@@ -38,7 +38,7 @@ class ConnectionMonitor(private val context: Context) {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context, intent: Intent) {
             when (intent.action) {
-                UsbManager.ACTION_USB_ACCESSORY_ATTACHED -> update(connected = true)
+                UsbManager.ACTION_USB_ACCESSORY_ATTACHED -> update(nowConnected = true)
                 UsbManager.ACTION_USB_ACCESSORY_DETACHED -> recheckAccessories()
             }
         }
