@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration (SDK paths etc.)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.cxx/
+captures/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Signing (never commit real keystores)
+*.keystore
+*.jks

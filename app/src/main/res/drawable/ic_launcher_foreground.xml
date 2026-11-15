@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Simple pickup-truck side silhouette used as the adaptive-icon foreground. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#F2F5F9"
+        android:pathData="M14,66 L14,54 Q14,50 18,50 L34,50 L42,34 Q44,30 48,30 L66,30 Q70,30 72,34 L80,50 L94,50 Q98,50 98,54 L98,62 Q98,66 94,66 L88,66 A9,9 0 0 0 70,66 L44,66 A9,9 0 0 0 26,66 L18,66 Q14,66 14,62 Z" />
+    <path
+        android:fillColor="#0A0E14"
+        android:pathData="M46,38 L64,38 L70,48 L42,48 Z" />
+    <path
+        android:fillColor="#5B9DFF"
+        android:pathData="M26,60 a9,9 0 1 0 18,0 a9,9 0 1 0 -18,0 M70,60 a9,9 0 1 0 18,0 a9,9 0 1 0 -18,0" />
+</vector>

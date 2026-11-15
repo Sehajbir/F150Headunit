@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">F-150 Head Unit</string>
+
+    <!-- Truck info panel -->
+    <string name="speed_label">Speed</string>
+    <string name="speed_unit_mph">MPH</string>
+    <string name="speed_unit_kmh">KM/H</string>
+    <string name="demo_badge">DEMO</string>
+
+    <string name="no_active_alerts">No Active Alerts</string>
+    <string name="alert_more">+%1$d more</string>
+
+    <string name="door_driver">Driver Door</string>
+    <string name="door_passenger">Passenger Door</string>
+    <string name="door_rear_left">Rear Left Door</string>
+    <string name="door_rear_right">Rear Right Door</string>
+    <string name="hood">Hood</string>
+    <string name="tailgate">Tailgate</string>
+    <string name="status_open">Open</string>
+    <string name="status_low">Low</string>
+    <string name="status_high">High</string>
+    <string name="alert_fuel_level">Fuel Level</string>
+    <string name="alert_coolant_temp">Coolant Temperature</string>
+
+    <string name="gauge_empty">E</string>
+    <string name="gauge_full">F</string>
+    <string name="gauge_cold">C</string>
+    <string name="gauge_hot">H</string>
+    <string name="range_label">RANGE</string>
+
+    <!-- Projection panel -->
+    <string name="placeholder_dash">--</string>
+    <string name="projection_default_title">CarPlay / Android Auto</string>
+    <string name="projection_not_connected">Not Connected</string>
+    <string name="projection_ready">Ready</string>
+    <string name="toast_unable_to_open">Unable to open the selected app.</string>
+    <string name="projection_hint">Please connect your phone\nto get started.</string>
+    <string name="projection_ready_hint">Tap anywhere in this panel to open it.</string>
+    <string name="projection_missing">The selected app is no longer installed.</string>
+    <string name="settings_button">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_projection">Projection</string>
+    <string name="settings_projection_app">Projection app</string>
+    <string name="settings_projection_app_none">Not configured – placeholder shown</string>
+    <string name="settings_auto_launch">Auto-open projection app on start</string>
+    <string name="settings_section_data">Vehicle data</string>
+    <string name="settings_data_source">CAN data source</string>
+    <string name="data_source_simulation">Simulation (demo data)</string>
+    <string name="data_source_usb">USB CAN adapter (experimental)</string>
+    <string name="settings_section_units">Units</string>
+    <string name="settings_speed_unit">Speed unit</string>
+    <string name="settings_temp_unit">Temperature unit</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version</string>
+
+    <string name="app_picker_title">Choose Projection App</string>
+    <string name="app_picker_none">None – show placeholder</string>
+    <string name="app_picker_loading">Scanning installed apps…</string>
+    <string name="app_picker_empty">No launchable apps found.</string>
+</resources>

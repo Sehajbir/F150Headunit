@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Framework Material (dark) base theme — no appcompat needed.
+      The app runs as a fullscreen, always-landscape cluster display.
+    -->
+    <style name="Theme.F150Headunit" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">@color/accent_blue</item>
+    </style>
+</resources>
