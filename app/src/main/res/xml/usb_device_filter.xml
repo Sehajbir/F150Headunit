@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Devices that should hand focus to this app when plugged in
+  (USB CAN adapters; vendor IDs in decimal).
+-->
+<resources>
+    <!-- candleLight / CANable (0x1D50) -->
+    <usb-device vendor-id="7504" />
+    <!-- STM32 USB (0x0483) -->
+    <usb-device vendor-id="1155" />
+    <!-- FTDI FT232 (0x0403) -->
+    <usb-device vendor-id="1027" />
+    <!-- Silicon Labs CP210x (0x10C4) -->
+    <usb-device vendor-id="4292" />
+    <!-- QinHeng CH341 (0x1A86) -->
+    <usb-device vendor-id="6790" />
+    <!-- MCS Electronics (0x16D0) -->
+    <usb-device vendor-id="5840" />
+</resources>

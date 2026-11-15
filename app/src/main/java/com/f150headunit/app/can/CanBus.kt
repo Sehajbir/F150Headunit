@@ -52,6 +52,9 @@ interface CanDataSource {
     /** Receives every frame produced by this source. */
     var listener: ((CanFrame) -> Unit)?
 
+    /** Optional one-line status reports (e.g. "waiting for adapter", "connected"). */
+    var statusListener: ((String) -> Unit)?
+
     fun start(context: Context)
     fun stop()
 }

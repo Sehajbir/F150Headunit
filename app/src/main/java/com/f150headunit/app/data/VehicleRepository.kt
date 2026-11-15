@@ -7,7 +7,7 @@ import com.f150headunit.app.can.CanDataSource
 import com.f150headunit.app.can.CanSignalDecoder
 import com.f150headunit.app.can.ExampleHsCanDecoder
 import com.f150headunit.app.can.SimulatedCanDataSource
-import com.f150headunit.app.can.UsbCanDataSource
+import com.f150headunit.app.can.SlcanCanDataSource
 import com.f150headunit.app.model.VehicleState
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -42,13 +42,19 @@ class VehicleRepository private constructor(private val appContext: Context) {
     var activeSource: Source = Source.SIMULATION
         private set
 
+    /** Latest one-line status from the active source (adapter state, link errors…). */
+    @Volatile
+    var sourceStatus: String? = null
+        private set
+
     /** Starts delivering state from [source]; stops any previously active source. */
     fun start(source: Source) {
         stop()
         activeSource = source
+        sourceStatus = null
         val newSource: CanDataSource = when (source) {
             Source.SIMULATION -> SimulatedCanDataSource()
-            Source.USB -> UsbCanDataSource()
+            Source.USB -> SlcanCanDataSource()
         }
         dataSource = newSource
         newSource.listener = { frame ->
@@ -59,6 +65,9 @@ class VehicleRepository private constructor(private val appContext: Context) {
                     notifyListeners(decoded)
                 }
             }
+        }
+        newSource.statusListener = { status ->
+            mainHandler.post { sourceStatus = status }
         }
         newSource.start(appContext)
     }

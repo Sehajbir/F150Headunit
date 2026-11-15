@@ -18,11 +18,22 @@ import com.f150headunit.app.data.VehicleRepository
 class SettingsActivity : Activity() {
 
     private val settings by lazy { Settings.getInstance(this) }
+    private val repository by lazy { VehicleRepository.getInstance(this) }
 
     private lateinit var projectionAppValue: TextView
     private lateinit var dataSourceValue: TextView
     private lateinit var speedUnitValue: TextView
     private lateinit var tempUnitValue: TextView
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    // Keeps the live adapter status under the CAN data source row fresh.
+    private val statusTicker = object : Runnable {
+        override fun run() {
+            refreshSummaries()
+            handler.postDelayed(this, STATUS_TICK_MS)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +67,12 @@ class SettingsActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refreshSummaries()
+        handler.post(statusTicker)
+    }
+
+    override fun onPause() {
+        handler.removeCallbacks(statusTicker)
+        super.onPause()
     }
 
     private fun refreshSummaries() {
@@ -83,12 +100,19 @@ class SettingsActivity : Activity() {
             }
         }
 
-        dataSourceValue.setText(
+        val sourceLabel = getString(
             when (settings.dataSource) {
                 VehicleRepository.Source.SIMULATION -> R.string.data_source_simulation
                 VehicleRepository.Source.USB -> R.string.data_source_usb
             },
         )
+        val sourceStatus = repository.sourceStatus
+        dataSourceValue.text =
+            if (sourceStatus != null && repository.activeSource == settings.dataSource) {
+                "$sourceLabel — $sourceStatus"
+            } else {
+                sourceLabel
+            }
         speedUnitValue.setText(
             if (settings.speedInKmh) R.string.speed_unit_kmh else R.string.speed_unit_mph,
         )
@@ -108,7 +132,7 @@ class SettingsActivity : Activity() {
                     if (which == 1) VehicleRepository.Source.USB else VehicleRepository.Source.SIMULATION
                 settings.dataSource = selected
                 // Hot-swap the live pipeline.
-                VehicleRepository.getInstance(this).start(selected)
+                repository.start(selected)
                 refreshSummaries()
                 dialog.dismiss()
             }
@@ -162,5 +186,9 @@ class SettingsActivity : Activity() {
         info.versionName ?: "--"
     } catch (e: PackageManager.NameNotFoundException) {
         "--"
+    }
+
+    private companion object {
+        const val STATUS_TICK_MS = 1_500L
     }
 }
